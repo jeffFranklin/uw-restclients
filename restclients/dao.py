@@ -4,6 +4,7 @@ from django.core.exceptions import *
 from restclients.dao_implementation.pws import File as PWSFile
 from restclients.dao_implementation.sws import File as SWSFile
 from restclients.dao_implementation.gws import File as GWSFile
+from restclients.dao_implementation.gws import File as IRWSFile
 from restclients.dao_implementation.book import File as BookFile
 from restclients.dao_implementation.canvas import File as CanvasFile
 from restclients.dao_implementation.catalyst import File as CatalystFile
@@ -113,6 +114,17 @@ class GWS_DAO(MY_DAO):
 
     def _getDAO(self):
         return self._getModule('RESTCLIENTS_GWS_DAO_CLASS', GWSFile)
+
+
+class IRWS_DAO(MY_DAO):
+    def getURL(self, url, headers):
+        return self._getURL('irws', url, headers)
+
+    def putURL(self, url, headers, body):
+        return self._putURL('irws', url, headers, body)
+
+    def _getDAO(self):
+        return self._getModule('RESTCLIENTS_IRWS_DAO_CLASS', IRWSFile)
 
 
 class Book_DAO(MY_DAO):
