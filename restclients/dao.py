@@ -4,7 +4,7 @@ from django.core.exceptions import *
 from restclients.dao_implementation.pws import File as PWSFile
 from restclients.dao_implementation.sws import File as SWSFile
 from restclients.dao_implementation.gws import File as GWSFile
-from restclients.dao_implementation.gws import File as IRWSFile
+from restclients.dao_implementation.irws import File as IRWSFile
 from restclients.dao_implementation.book import File as BookFile
 from restclients.dao_implementation.canvas import File as CanvasFile
 from restclients.dao_implementation.catalyst import File as CatalystFile

@@ -41,7 +41,6 @@ class IRWS(object):
             raise InvalidNetID(netid)
         dao = IRWS_DAO()
         url = "/%s/v1/person?uwnetid=%s" % (self._service_name, netid.lower())
-        print 'idurl = ' + url
         response = dao.getURL(url, {"Accept": "application/json"})
 
         if response.status != 200:
@@ -60,13 +59,37 @@ class IRWS(object):
 
         dao = IRWS_DAO()
         url = "/%s/v1/name/uwnetid=%s" % (self._service_name, netid.lower())
-        print 'nameurl = ' + url
         response = dao.getURL(url, {"Accept": "application/json"})
 
         if response.status != 200:
             raise DataFailureException(url, response.status, response.data)
 
         return self._name_from_json(response.data)
+
+    def put_name_by_netid(self, netid, data):
+        """
+        Updates display info for a Name object
+        """
+        if not self.valid_uwnetid(netid):
+            raise InvalidNetID(netid)
+
+        dao = IRWS_DAO()
+        url = "/%s/v1/name/uwnetid=%s" % (self._service_name, netid.lower())
+        # construct the put data
+        dataname = json.loads(data)
+        putname = {}
+        putname['display_fname'] = dataname['display_fname']
+        putname['display_mname'] = dataname['display_mname']
+        putname['display_sname'] = dataname['display_lname']
+        pd = {}
+        pd['name'] = []
+        pd['name'].append(putname)
+        response = dao.putURL(url, {"Accept": "application/json"}, json.dumps(pd))
+
+        if response.status != 200:
+            raise DataFailureException(url, response.status, response.data)
+
+        return response.status
 
     def get_hepps_person_by_uri(self, uri):
         """

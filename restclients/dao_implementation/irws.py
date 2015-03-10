@@ -91,3 +91,12 @@ class Live(object):
                             url, headers=headers,
                             service_name='irws')
 
+    def putURL(self, url, headers, body):
+        if Live.pool is None:
+            Live.pool = self._get_pool()
+
+        return get_live_url(Live.pool, 'PUT',
+                            settings.RESTCLIENTS_IRWS_HOST,
+                            url, headers=headers, body=body,
+                            service_name='irws')
+
