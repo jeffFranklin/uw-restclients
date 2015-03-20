@@ -141,16 +141,16 @@ class IRWS(object):
         nd = json.loads(data)['name'][0]
         name = Name()
         name.validid = nd['validid']
-        name.formal_cname = nd['formal_cname']
-        name.formal_fname = nd['formal_fname']
-        name.formal_lname = nd['formal_sname']
-        name.formal_privacy = nd['formal_privacy']
-        name.display_cname = nd['display_cname']
-        name.display_fname = nd['display_fname']
+        if 'formal_cname' in nd: name.formal_cname = nd['formal_cname']
+        if 'formal_fname' in nd: name.formal_fname = nd['formal_fname']
+        if 'formal_sname' in nd: name.formal_lname = nd['formal_sname']
+        if 'formal_privacy' in nd: name.formal_privacy = nd['formal_privacy']
+        if 'display_cname' in nd: name.display_cname = nd['display_cname']
+        if 'display_fname' in nd: name.display_fname = nd['display_fname']
         if 'display_mname' in nd: name.display_mname = nd['display_mname']
         else: name.display_mname = ''
-        name.display_lname = nd['display_sname']
-        name.display_privacy = nd['display_privacy']
+        if 'display_mname' in nd: name.display_lname = nd['display_sname']
+        if 'display_mname' in nd: name.display_privacy = nd['display_privacy']
         return name
 
     def _identity_from_json(self, data):
