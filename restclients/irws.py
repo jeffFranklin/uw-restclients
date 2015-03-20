@@ -148,9 +148,8 @@ class IRWS(object):
         if 'display_cname' in nd: name.display_cname = nd['display_cname']
         if 'display_fname' in nd: name.display_fname = nd['display_fname']
         if 'display_mname' in nd: name.display_mname = nd['display_mname']
-        else: name.display_mname = ''
-        if 'display_mname' in nd: name.display_lname = nd['display_sname']
-        if 'display_mname' in nd: name.display_privacy = nd['display_privacy']
+        if 'display_sname' in nd: name.display_lname = nd['display_sname']
+        if 'display_privacy' in nd: name.display_privacy = nd['display_privacy']
         return name
 
     def _identity_from_json(self, data):
