@@ -5,8 +5,11 @@ Contains IRWS DAO implementations.
 from django.conf import settings
 from restclients.mock_http import MockHTTP
 import re
+import logging
 from restclients.dao_implementation.live import get_con_pool, get_live_url
 from restclients.dao_implementation.mock import get_mockdata_url
+
+logger = logging.getLogger(__name__)
 
 # This seemed like a good number based on a test using a class w/ 300 students.
 # The range 10-50 all did well, so this seemed like the most sociable, high performing
@@ -25,13 +28,11 @@ class File(object):
 
     def putURL(self, url, headers, body):
         response = MockHTTP()
+        logger.debug('made it to putURL')
 
-        if "If-Match" in headers:
-            response.status = 200  # update
-        else:
-            response.status = 201  # create
+        response.status = 200
         response.headers = {"X-Data-Source": "GWS file mock data",
-                            "Content-Type": headers["Content-Type"]}
+                            "Content-Type": 'application/json'}
         response.data = body
         return response
 
