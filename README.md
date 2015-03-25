@@ -1,5 +1,5 @@
-[![Build Status](https://api.travis-ci.org/uw-it-aca/uw-restclients.svg?branch=master)](https://travis-ci.org/uw-it-aca/uw-restclients)
-[![Coverage Status](https://coveralls.io/repos/uw-it-aca/uw-restclients/badge.png?branch=master)](https://coveralls.io/r/uw-it-aca/uw-restclients?branch=master)
+[![Build Status](https://api.travis-ci.org/UWIT-IAM/uw-restclients.svg?branch=master)](https://travis-ci.org/uw-it-aca/uw-restclients)
+[![Coverage Status](https://coveralls.io/repos/UWIT-IAM/uw-restclients/badge.svg)](https://coveralls.io/r/UWIT-IAM/uw-restclients)
 
 uw-restclients
 ==============
