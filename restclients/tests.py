@@ -90,3 +90,5 @@ from restclients.test.myplan import MyPlanTestData
 from restclients.test.thread import ThreadsTest
 from restclients.test.view import ViewTest
 from restclients.test.dao_implementation.mock import TestMock
+
+from restclients.test.irws import IRWSTest
