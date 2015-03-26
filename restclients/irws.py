@@ -11,6 +11,7 @@ from restclients.dao import IRWS_DAO
 from restclients.exceptions import InvalidRegID, InvalidNetID, InvalidEmployeeID
 from restclients.exceptions import InvalidIdCardPhotoSize
 from restclients.exceptions import DataFailureException
+from restclients.exceptions import InvalidIRWSName
 from restclients.models.irws import Name, HeppsPerson, PersonIdentity
 from StringIO import StringIO
 from urllib import urlencode
@@ -27,7 +28,7 @@ class IRWS(object):
         self._re_admin_netid = re.compile(r'^[a-z]adm_[a-z][a-z0-9]{0,7}$', re.I)
         self._re_application_netid = re.compile(r'^a_[a-z0-9\-\_\.$.]{1,18}$', re.I)
         self._re_employee_id = re.compile(r'^\d{9}$')
-
+        self._re_name_part = re.compile(r'^[\w !\"#$%&\'()*+,.\-:;<>?@\/`=]*$')
         self._service_name = settings.RESTCLIENTS_IRWS_SERVICE_NAME
 
 
@@ -73,17 +74,10 @@ class IRWS(object):
         if not self.valid_uwnetid(netid):
             raise InvalidNetID(netid)
 
+        pd = self.valid_irws_name_from_json(data)
+
         dao = IRWS_DAO()
         url = "/%s/v1/name/uwnetid=%s" % (self._service_name, netid.lower())
-        # construct the put data
-        dataname = json.loads(data)
-        putname = {}
-        putname['display_fname'] = dataname['display_fname']
-        putname['display_mname'] = dataname['display_mname']
-        putname['display_sname'] = dataname['display_lname']
-        pd = {}
-        pd['name'] = []
-        pd['name'].append(putname)
         response = dao.putURL(url, {"Accept": "application/json"}, json.dumps(pd))
 
         if response.status != 200:
@@ -116,6 +110,34 @@ class IRWS(object):
 
     def valid_employee_id(self, employee_id):
         return True if self._re_employee_id.match(str(employee_id)) else False
+
+    def valid_irws_name_from_json(self, data):
+        # construct and validate the put data
+        putname = {}
+        try:
+            dataname = json.loads(data)
+            putname['display_fname'] = dataname['display_fname']
+            putname['display_mname'] = dataname['display_mname']
+            putname['display_sname'] = dataname['display_lname']
+        except:
+            raise InvalidIRWSName('invalid json')
+
+        if any(not self.valid_name_part(x) for x in putname.values()):
+            raise InvalidIRWSName('name has invalid characters')
+        if any(putname[x] == '' for x in ('display_fname', 'display_sname')):
+            raise InvalidIRWSName('required fields cannot be empty')
+        if len(' '.join(x for x in putname.values() if x != '')) > 80:
+            raise InvalidIRWSName(
+                'complete display name cannot be longer than 80 characters')
+
+        pd = {}
+        pd['name'] = []
+        pd['name'].append(putname)
+
+        return pd
+
+    def valid_name_part(self, name):
+        return self._re_name_part.match(name) != None
 
     def _hepps_person_from_json(self, data):
         """

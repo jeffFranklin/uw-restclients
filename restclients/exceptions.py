@@ -59,6 +59,10 @@ class InvalidGradebookID:
     """Exception for invalid gradebook id."""
     pass
 
+class InvalidIRWSName(Exception):
+    """Exception for invalid IRWS name."""
+    pass
+
 class DataFailureException(Exception):
     """
     This exception means there was an error fetching content
