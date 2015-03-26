@@ -70,6 +70,20 @@ class IRWSTest(TestCase):
                               irws.valid_irws_name_from_json,
                               bad_json)
 
+    def test_valid_irws_name_bad_characters(self):
+        irws = IRWS()
+        bad_data_list = [
+            ('^', 'average', 'user'),
+            ('joe', '^', 'user'),
+            ('joe', 'average', '^'),
+            ]
+
+        for bad_data in bad_data_list:
+            bad_json = self._json_name_from_tuple(bad_data)
+            self.assertRaises(InvalidIRWSName,
+                              irws.valid_irws_name_from_json,
+                              bad_json)
+
     def test_valid_irws_name_too_long(self):
         # 80 is the magic number
         irws = IRWS()
