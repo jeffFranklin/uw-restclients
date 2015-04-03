@@ -28,7 +28,7 @@ class IRWS(object):
         self._re_admin_netid = re.compile(r'^[a-z]adm_[a-z][a-z0-9]{0,7}$', re.I)
         self._re_application_netid = re.compile(r'^a_[a-z0-9\-\_\.$.]{1,18}$', re.I)
         self._re_employee_id = re.compile(r'^\d{9}$')
-        self._re_name_part = re.compile(r'^[\w !#$%&\'*+\-,.?^_`{}~]*$')
+        self._re_name_part = re.compile(r'^[\w !#$&\'*+\-,.?^_`{}~]*$')
         self._service_name = settings.RESTCLIENTS_IRWS_SERVICE_NAME
 
     def get_identity_by_netid(self, netid):
