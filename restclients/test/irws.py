@@ -1,9 +1,9 @@
 import json
 from django.test import TestCase, override_settings
 from django.conf import settings
-
 from restclients.irws import IRWS
 from restclients.exceptions import InvalidIRWSName
+
 
 @override_settings(RESTCLIENTS_IRWS_DAO_CLASS='restclients.dao_implementation.irws.File',
                    RESTCLIENTS_IRWS_SERVICE_NAME='registry-dev')
@@ -18,11 +18,12 @@ class IRWSTest(TestCase):
         irws = IRWS()
         self.assertTrue(irws.valid_name_part('james'))
         self.assertTrue(irws.valid_name_part(' '))
-        self.assertTrue(irws.valid_name_part(' !#$&\'*+-,.?^_`{}~'))
+        self.assertTrue(irws.valid_name_part(' !$&\'*-,.?^_`{}~'))
+        # self.assertTrue(irws.valid_name_part(' !$&\'*-,.?^_`{}~#+%'))
 
     def test_valid_name_part_bad(self):
         irws = IRWS()
-        bad_chars = '%"():;<>[\]|@'
+        bad_chars = '"():;<>[\]|@%+#'  # %+# should eventually come out
         self.assertFalse(irws.valid_name_part(u'Jos\xe9'))  # utf-8
         for c in bad_chars:
             self.assertFalse(irws.valid_name_part(c),

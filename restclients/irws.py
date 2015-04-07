@@ -5,7 +5,7 @@ This is the interface for interacting with the Identity Registry Web Service.
 import re
 import copy
 import json
-
+import logging
 from django.conf import settings
 from restclients.dao import IRWS_DAO
 from restclients.exceptions import InvalidRegID, InvalidNetID, InvalidEmployeeID
@@ -15,6 +15,8 @@ from restclients.exceptions import InvalidIRWSName
 from restclients.models.irws import Name, HeppsPerson, PersonIdentity
 from StringIO import StringIO
 from urllib import urlencode
+
+logger = logging.getLogger(__name__)
 
 
 class IRWS(object):
@@ -28,7 +30,8 @@ class IRWS(object):
         self._re_admin_netid = re.compile(r'^[a-z]adm_[a-z][a-z0-9]{0,7}$', re.I)
         self._re_application_netid = re.compile(r'^a_[a-z0-9\-\_\.$.]{1,18}$', re.I)
         self._re_employee_id = re.compile(r'^\d{9}$')
-        self._re_name_part = re.compile(r'^[\w !#$&\'*+\-,.?^_`{}~]*$')
+        """ Consider adding back +, #, and % when irws stops decoding """
+        self._re_name_part = re.compile(r'^[\w !$&\'*\-,.?^_`{}~]*$')
         self._service_name = settings.RESTCLIENTS_IRWS_SERVICE_NAME
 
     def get_identity_by_netid(self, netid):
@@ -74,7 +77,6 @@ class IRWS(object):
             raise InvalidNetID(netid)
 
         pd = self.valid_irws_name_from_json(data)
-
         dao = IRWS_DAO()
         url = "/%s/v1/name/uwnetid=%s" % (self._service_name, netid.lower())
         response = dao.putURL(url, {"Accept": "application/json"}, json.dumps(pd))
