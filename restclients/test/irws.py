@@ -29,6 +29,15 @@ class IRWSTest(TestCase):
             self.assertFalse(irws.valid_name_part(c),
                              "testing invalid character '{}'".format(c))
 
+    def test_valid_name_part_too_long(self):
+        # 65 is the magic number
+        bad_name = ('1234567891123456789212345678931234567894'
+                    '12345678951234567896123456')
+        irws = IRWS()
+        self.assertFalse(irws.valid_name_part(bad_name))
+        # one less should be good
+        self.assertTrue(irws.valid_name_part(bad_name[:-1]))
+
     def test_valid_irws_name_good(self):
         irws = IRWS()
         name = ('joe', 'average', 'user')
@@ -93,12 +102,12 @@ class IRWSTest(TestCase):
         # 80 is the magic number
         irws = IRWS()
         bad_data_list = [
-            ('012345678911234567892123456789',
-             '312345678941234567895123456789',
-             '6123456789712345678'),
-            ('0123456789112345678921234567893123456789',
+            ('123456789112345678921234567893',
+             '123456789412345678951234567896',
+             '1234567897123456789'),
+            ('1234567891123456789212345678931234567894',
              '',
-             '4123456789512345678961234567897123456789',
+             '1234567895123456789612345678971234567898',
              )
             ]
 

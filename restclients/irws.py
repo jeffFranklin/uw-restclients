@@ -124,7 +124,7 @@ class IRWS(object):
             raise InvalidIRWSName('invalid json')
 
         if any(not self.valid_name_part(x) for x in putname.values()):
-            raise InvalidIRWSName('name has invalid characters')
+            raise InvalidIRWSName('name too long or has invalid characters')
         if any(putname[x] == '' for x in ('display_fname', 'display_sname')):
             raise InvalidIRWSName('required fields cannot be empty')
         if len(' '.join(x for x in putname.values() if x != '')) > 80:
@@ -138,7 +138,8 @@ class IRWS(object):
         return pd
 
     def valid_name_part(self, name):
-        return self._re_name_part.match(name) != None
+        return (len(name) <= 65 and
+                self._re_name_part.match(name) != None)
 
     def _hepps_person_from_json(self, data):
         """
