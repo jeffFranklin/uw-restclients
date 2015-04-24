@@ -1,8 +1,11 @@
 import json
+import logging
 from django.test import TestCase, override_settings
 from django.conf import settings
 from restclients.irws import IRWS
 from restclients.exceptions import InvalidIRWSName
+
+logger = logging.getLogger(__name__)
 
 
 @override_settings(RESTCLIENTS_IRWS_DAO_CLASS='restclients.dao_implementation.irws.File',
@@ -30,9 +33,8 @@ class IRWSTest(TestCase):
                              "testing invalid character '{}'".format(c))
 
     def test_valid_name_part_too_long(self):
-        # 65 is the magic number
-        bad_name = ('1234567891123456789212345678931234567894'
-                    '12345678951234567896123456')
+        # 64 is the magic number
+        bad_name = 'a' * 65
         irws = IRWS()
         self.assertFalse(irws.valid_name_part(bad_name))
         # one less should be good
@@ -102,14 +104,8 @@ class IRWSTest(TestCase):
         # 80 is the magic number
         irws = IRWS()
         bad_data_list = [
-            ('123456789112345678921234567893',
-             '123456789412345678951234567896',
-             '1234567897123456789'),
-            ('1234567891123456789212345678931234567894',
-             '',
-             '1234567895123456789612345678971234567898',
-             )
-            ]
+            ('f' * 30, 'm' * 30, 'l' * 19),
+            ('f' * 40, '', 'l' * 40)]
 
         for bad_data in bad_data_list:
             # one less character will pass

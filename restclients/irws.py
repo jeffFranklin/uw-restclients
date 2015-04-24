@@ -138,7 +138,7 @@ class IRWS(object):
         return pd
 
     def valid_name_part(self, name):
-        return (len(name) <= 65 and
+        return (len(name) <= 64 and
                 self._re_name_part.match(name) != None)
 
     def _hepps_person_from_json(self, data):
