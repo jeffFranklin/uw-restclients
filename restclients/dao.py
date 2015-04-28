@@ -15,11 +15,13 @@ from restclients.dao_implementation.trumba import FileSea
 from restclients.dao_implementation.trumba import FileBot
 from restclients.dao_implementation.trumba import FileTac
 from restclients.dao_implementation.trumba import CalendarFile
+from restclients.dao_implementation.digitlib import File as DigitlibFile
 from restclients.dao_implementation.libraries import File as LibrariesFile
 from restclients.dao_implementation.myplan import File as MyPlanFile
 from restclients.dao_implementation.hfs import File as HfsFile
 from restclients.dao_implementation.uwnetid import File as UwnetidFile
 from restclients.dao_implementation.r25 import File as R25File
+from restclients.dao_implementation.iasystem import File as IASystemFile
 from restclients.cache_implementation import NoCache
 
 
@@ -80,6 +82,29 @@ class MY_DAO(DAO_BASE):
     def _putURL(self, service, url, headers, body=None):
         dao = self._getDAO()
         response = dao.putURL(url, headers, body)
+        return response
+
+
+class Subdomain_DAO(MY_DAO):
+    def _getURL(self, service, url, headers, subdomain):
+        dao = self._getDAO()
+        cache = self._getCache()
+        cache_url = subdomain + url
+        cache_response = cache.getCache(service, cache_url, headers)
+        if cache_response != None:
+            if "response" in cache_response:
+                return cache_response["response"]
+            if "headers" in cache_response:
+                headers = cache_response["headers"]
+
+        response = dao.getURL(url, headers, subdomain)
+
+        cache_post_response = cache.processResponse(service, cache_url, response)
+
+        if cache_post_response != None:
+            if "response" in cache_post_response:
+                return cache_post_response["response"]
+
         return response
 
 
@@ -158,6 +183,14 @@ class Catalyst_DAO(MY_DAO):
 
     def _getDAO(self):
         return self._getModule('RESTCLIENTS_CATALYST_DAO_CLASS', CatalystFile)
+
+
+class DigitLib_DAO(MY_DAO):
+    def getURL(self, url, headers):
+        return self._getURL('digitlib', url, headers)
+
+    def _getDAO(self):
+        return self._getModule('RESTCLIENTS_DIGITLIB_DAO_CLASS', DigitlibFile)
 
 
 class R25_DAO(MY_DAO):
@@ -289,3 +322,11 @@ class TrumbaTac_DAO(MY_DAO):
     def _getDAO(self):
         return self._getModule('RESTCLIENTS_TRUMBA_TAC_DAO_CLASS',
                                FileTac)
+
+
+class IASYSTEM_DAO(Subdomain_DAO):
+    def getURL(self, url, headers, subdomain):
+        return self._getURL('iasystem', url, headers, subdomain)
+
+    def _getDAO(self):
+        return self._getModule('RESTCLIENTS_IASYSTEM_DAO_CLASS', IASystemFile)

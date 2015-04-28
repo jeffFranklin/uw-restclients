@@ -1,6 +1,5 @@
 """
-Interfaceing with the Student Web Service,
- for Section resource and Course resource.
+Interfacing with the Student Web Service, for Section and Course resources.
 """
 import logging
 import re
@@ -11,6 +10,7 @@ from restclients.exceptions import InvalidSectionID, InvalidSectionURL
 from restclients.models.sws import Section, SectionReference, FinalExam
 from restclients.models.sws import SectionMeeting
 from restclients.models.sws import GradeSubmissionDelegate
+from restclients.models.sws import Person
 from restclients.pws import PWS
 from restclients.sws import get_resource, encode_section_label
 from restclients.sws.term import get_term_by_year_and_quarter
@@ -53,12 +53,29 @@ def get_sections_by_curriculum_and_term(curriculum, term):
     for the passed curriculum and term.
     """
     url = "%s?%s" % (section_res_url_prefix,
-                     urlencode(
-            {"year": term.year,
-             "quarter": term.quarter.lower(),
-             "curriculum_abbreviation": curriculum.label
-             }))
+                     urlencode({"year": term.year,
+                                "quarter": term.quarter.lower(),
+                                "curriculum_abbreviation": curriculum.label}))
     return _json_to_sectionref(get_resource(url), term)
+
+
+def get_changed_sections_by_term(changed_since_date, term):
+    url = "%s?%s" % (section_res_url_prefix,
+                     urlencode({"year": term.year,
+                                "quarter": term.quarter.lower(),
+                                "changed_since_date": changed_since_date,
+                                "page_size": 1000}))
+
+    sections = []
+    while url is not None:
+        data = get_resource(url)
+        sections.extend(_json_to_sectionref(data, term))
+
+        url = None
+        if data.get("Next") is not None:
+            url = data.get("Next").get("Href", None)
+
+    return sections
 
 
 def _json_to_sectionref(data, aterm):
@@ -184,6 +201,9 @@ def _json_to_section(section_data,
     section.course_campus = section_data["CourseCampus"]
     section.section_id = section_data["SectionID"]
     section.institute_name = section_data.get("InstituteName", "")
+    section.primary_lms = section_data.get("PrimaryLMS", None)
+    section.lms_ownership = section_data.get("LMSOwnership", None)
+    section.is_independent_start = section_data.get("IsIndependentStart", False)
 
     section.section_type = section_data["SectionType"]
     if "independent study" == section.section_type:
@@ -279,14 +299,18 @@ def _json_to_section(section_data,
                 pdata = instructor_data["Person"]
 
                 if "RegID" in pdata and pdata["RegID"] is not None:
-                    instructor = pws.get_person_by_regid(pdata["RegID"])
+                    try:
+                        instructor = pws.get_person_by_regid(pdata["RegID"])
+                    except:
+                        instructor = Person(uwregid = pdata["RegID"],
+                                            display_name = pdata["Name"])
                     instructor.TSPrint = instructor_data["TSPrint"]
                     meeting.instructors.append(instructor)
 
         section.meetings.append(meeting)
 
     section.final_exam = None
-    if "FinalExam" in section_data:
+    if "FinalExam" in section_data and section_data["FinalExam"] is not None:
         if "MeetingStatus" in section_data["FinalExam"]:
             final_exam = FinalExam()
             final_data = section_data["FinalExam"]

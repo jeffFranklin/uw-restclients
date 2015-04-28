@@ -4,6 +4,7 @@ from restclients.test.uwnetid.subscription import EmailForwardingTest
 from restclients.test.util.date_formator import formatorTest
 from restclients.test.hfs.idcard import HfsTest
 from restclients.test.library.mylibinfo import MyLibInfoTest
+from restclients.test.digitlib.curric import DigitLibTest
 
 from restclients.test.sws.compatible import SWSTest
 from restclients.test.sws.financial import SWSFinance
@@ -90,5 +91,5 @@ from restclients.test.myplan import MyPlanTestData
 from restclients.test.thread import ThreadsTest
 from restclients.test.view import ViewTest
 from restclients.test.dao_implementation.mock import TestMock
-
 from restclients.test.irws import IRWSTest
+from restclients.test.iasystem.evaluation import IASystemTest
