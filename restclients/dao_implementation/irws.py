@@ -79,25 +79,25 @@ class Live(object):
     RESTCLIENTS_IRWS_KEY_FILE='/path/to/the/certs_key.key',
     RESTCLIENTS_IRWS_HOST='https://ucswseval1.cac.washington.edu:443',
     """
-    pool = None
-
     def getURL(self, url, headers):
-        if Live.pool == None:
-            Live.pool = get_con_pool(settings.RESTCLIENTS_IRWS_HOST,
-                                     settings.RESTCLIENTS_IRWS_KEY_FILE,
-                                     settings.RESTCLIENTS_IRWS_CERT_FILE,
-                                     max_pool_size= IRWS_MAX_POOL_SIZE)
-        return get_live_url(Live.pool, 'GET',
+        return get_live_url(self.pool, 'GET',
                             settings.RESTCLIENTS_IRWS_HOST,
                             url, headers=headers,
                             service_name='irws')
 
     def putURL(self, url, headers, body):
-        if Live.pool is None:
-            Live.pool = self._get_pool()
-
-        return get_live_url(Live.pool, 'PUT',
+        return get_live_url(self.pool, 'PUT',
                             settings.RESTCLIENTS_IRWS_HOST,
                             url, headers=headers, body=body,
                             service_name='irws')
+
+    _pool = None
+    @property
+    def pool(self):
+        if Live._pool is None:
+            Live._pool = get_con_pool(settings.RESTCLIENTS_IRWS_HOST,
+                                 settings.RESTCLIENTS_IRWS_KEY_FILE,
+                                 settings.RESTCLIENTS_IRWS_CERT_FILE,
+                                 max_pool_size=IRWS_MAX_POOL_SIZE)
+        return Live._pool
 
