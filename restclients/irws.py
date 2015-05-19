@@ -100,6 +100,27 @@ class IRWS(object):
 
         return self._hepps_person_from_json(response.data)
 
+    def post_hepps_person_by_netid(self, netid, data):
+        """
+        Post to the irws person hepps resource.
+        We look up the person by netid to get the uri to post to.
+        """
+        if not self.valid_uwnetid(netid):
+            raise InvalidNetID(netid)
+        hepps_person = self.valid_hepps_person_from_json(data)
+        identity = self.get_identity_by_netid(netid)
+        if 'hepps' not in identity.identifiers.keys():
+            raise InvalidIRWSIdentity('not a hepps person')
+        post_url = '/{}/v1/{}'.format(self._service_name, 
+                                      identity.identifiers['hepps'])
+        response = dao.postURL(post_url,
+                               {'Accept': 'application/json'},
+                               json.dumps(hepps_person))
+        if response.status != 200:
+            raise DataFailureException(url, response.status, response.data)
+
+        return response.status
+
     def valid_uwnetid(self, netid):
         uwnetid = str(netid)
         return (self._re_personal_netid.match(uwnetid) != None
@@ -136,6 +157,26 @@ class IRWS(object):
         pd['name'].append(putname)
 
         return pd
+
+    def valid_hepps_person_from_json(self, data):
+        """
+        Validate input of supported fields and return an
+        object that can be posted to irws
+        """
+        post_person = {}
+        try:
+            data_person = json_loads(data)
+            post_person['wp_publish'] = data_person.pop('wp_publish')
+            if len(data_person.keys()) != 0:
+                logger.info('ignoring the following keys for post: {}'.format(
+                        ', '.join(data_person.keys())))
+        except:
+            raise InvalidIRWSPerson('invalid json')
+
+        if post_person['wp_publish'] not in ('Y', 'N', 'E'):
+            raise InvalidIRWSPerson('wp_publish can only be Y, N, or E')
+
+        return {'person': [post_person]}
 
     def valid_name_part(self, name):
         return (len(name) <= 64 and
