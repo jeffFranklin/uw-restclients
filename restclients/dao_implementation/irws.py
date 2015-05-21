@@ -42,7 +42,6 @@ class File(object):
         response = MockHTTP()
         logger.debug('made it to putURL')
 
-        response.status = 200
         response.headers = {"Content-Type": 'application/json'}
         if url in File._cache:
             cache = json.loads(File._cache[url])
@@ -52,8 +51,10 @@ class File(object):
                 cache[type][0][attr] = request[type][0][attr]
             File._cache[url] = json.dumps(cache)
             response.data = File._cache[url]
+            response.status = 200
         else:
             response.data = body
+            response.status = 404
         return response
 
     def postURL(self, url, headers, body):

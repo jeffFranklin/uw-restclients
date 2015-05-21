@@ -128,7 +128,7 @@ class IRWS(object):
                                {'Accept': 'application/json'},
                                json.dumps(hepps_person))
         if response.status != 200:
-            raise DataFailureException(url, response.status, response.data)
+            raise DataFailureException(post_url, response.status, response.data)
 
         return response.status
 
