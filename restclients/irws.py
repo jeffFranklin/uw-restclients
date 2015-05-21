@@ -11,7 +11,7 @@ from restclients.dao import IRWS_DAO
 from restclients.exceptions import InvalidRegID, InvalidNetID, InvalidEmployeeID
 from restclients.exceptions import InvalidIdCardPhotoSize
 from restclients.exceptions import DataFailureException
-from restclients.exceptions import InvalidIRWSName
+from restclients.exceptions import InvalidIRWSName, InvalidIRWSPerson, IRWSPersonNotFound
 from restclients.models.irws import Name, HeppsPerson, PersonIdentity
 from StringIO import StringIO
 from urllib import urlencode
@@ -92,13 +92,24 @@ class IRWS(object):
         If the record id isn't found, nothing will be returned. If there is an error
         communicating with the IRWS, a DataFailureException will be thrown.
         """
-        url = "/%s/v1/%s" % (self._service_name, uri)
+        url = "/%s/v1%s" % (self._service_name, uri)
         response = IRWS_DAO().getURL(url, {"Accept": "application/json"})
 
         if response.status != 200:
             raise DataFailureException(url, response.status, response.data)
 
         return self._hepps_person_from_json(response.data)
+
+    def get_hepps_person_by_netid(self, netid):
+        """
+        Returns a restclients.irws.HeppsPerson object for a given netid. Two round
+        trips - one to get the identity, and a second to look up a person based on
+        the 'hepps' uri in the payload
+        """
+        identity = self.get_identity_by_netid(netid)
+        if 'hepps' not in identity.identifiers.keys():
+            raise IRWSPersonNotFound('netid ' + netid + ' not a hepps person')
+        return self.get_hepps_person_by_uri(identity.identifiers['hepps'])
 
     def post_hepps_person_by_netid(self, netid, data):
         """
@@ -110,10 +121,10 @@ class IRWS(object):
         hepps_person = self.valid_hepps_person_from_json(data)
         identity = self.get_identity_by_netid(netid)
         if 'hepps' not in identity.identifiers.keys():
-            raise InvalidIRWSIdentity('not a hepps person')
-        post_url = '/{}/v1/{}'.format(self._service_name, 
+            raise IRWSPersonNotFound('netid ' + netid + ' not a hepps person')
+        post_url = '/{}/v1{}'.format(self._service_name,
                                       identity.identifiers['hepps'])
-        response = dao.postURL(post_url,
+        response = IRWS_DAO().postURL(post_url,
                                {'Accept': 'application/json'},
                                json.dumps(hepps_person))
         if response.status != 200:
@@ -165,7 +176,7 @@ class IRWS(object):
         """
         post_person = {}
         try:
-            data_person = json_loads(data)
+            data_person = json.loads(data)
             post_person['wp_publish'] = data_person.pop('wp_publish')
             if len(data_person.keys()) != 0:
                 logger.info('ignoring the following keys for post: {}'.format(
@@ -199,7 +210,7 @@ class IRWS(object):
         person.category_name = person_data['category_name']
         
         if 'wp_publish' in person_data: person.wp_publish = person_data['wp_publish']
-        else: person.wp_publish = 'Y'
+        else: person.wp_publish = 'N'  # default to no
         return person
 
     def _name_from_json(self, data):
