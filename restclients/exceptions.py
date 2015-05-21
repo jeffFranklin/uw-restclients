@@ -63,6 +63,14 @@ class InvalidIRWSName(Exception):
     """Exception for invalid IRWS name."""
     pass
 
+class InvalidIRWSPerson(Exception):
+    """Exception for invalid IRWS name."""
+    pass
+
+class IRWSPersonNotFound(Exception):
+    """Exception for netids that don't exist"""
+    pass
+
 class DataFailureException(Exception):
     """
     This exception means there was an error fetching content

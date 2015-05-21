@@ -148,6 +148,9 @@ class IRWS_DAO(MY_DAO):
     def putURL(self, url, headers, body):
         return self._putURL('irws', url, headers, body)
 
+    def postURL(self, url, headers, body):
+        return self._postURL('irws', url, headers, body)
+
     def _getDAO(self):
         return self._getModule('RESTCLIENTS_IRWS_DAO_CLASS', IRWSFile)
 
