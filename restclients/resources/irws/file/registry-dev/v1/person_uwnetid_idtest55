@@ -1,0 +1,15 @@
+{
+  "person": [
+    {
+      "identity": {
+        "regid": "F533DB1751A34FF1878CA1C88A3D179C",
+        "lname": "Adams",
+        "fname": "Dwight",
+        "identifiers": {
+          "sdb": "/person/sdb/990100554"
+        }
+      }
+    }
+  ],
+  "totalcount": 1
+}
