@@ -1,0 +1,15 @@
+{
+  "person": [
+    {
+      "identity": {
+        "regid": "28098ACBAC71425D9B2912757E4EF3AE",
+        "lname": "Harrison",
+        "fname": "Dolley",
+        "identifiers": {
+          "uwhr": "/person/uwhr/000210870"
+        }
+      }
+    }
+  ],
+  "totalcount": 1
+}

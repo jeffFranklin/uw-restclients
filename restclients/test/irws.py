@@ -161,61 +161,81 @@ class IRWSTest(TestCase):
                           irws.get_identity_by_netid,
                           'nonuser')
 
-    def test_get_hepps_person_by_netid(self):
+    def test_get_hr_person_by_netid(self):
         irws = IRWS()
-        # idtest56 is set up to be a hepps person
-        hepps_person = irws.get_hepps_person_by_netid('idtest56')
-        self.assertEqual('N', hepps_person.wp_publish)
-        self.assertEqual('28098ACBAC71425D9B2912757E4EF3AE', hepps_person.regid)
+        # idtest56 is set up to be a hr person
+        hr_person = irws.get_hr_person_by_netid('idtest56')
+        self.assertEqual('N', hr_person.wp_publish)
+        self.assertEqual('28098ACBAC71425D9B2912757E4EF3AE', hr_person.regid)
 
-    def test_get_hepps_person_by_netid_not_hepps(self):
+    def test_get_hr_person_by_netid_uwhr(self):
         irws = IRWS()
-        # idtest55 is set up to NOT be a hepps person
+        # a_idtest56_uwhr is a copy of idtest56 but points to the uwhr source.
+        # the a_ is to get past netid validation
+        hr_person = irws.get_hr_person_by_netid('a_idtest56_uwhr')
+        self.assertEqual('N', hr_person.wp_publish)
+        self.assertEqual('28098ACBAC71425D9B2912757E4EF3AE', hr_person.regid)
+
+    def test_get_hr_person_by_netid_not_hr(self):
+        irws = IRWS()
+        # idtest55 is set up to NOT be a hr person
         self.assertRaises(IRWSPersonNotFound,
-                          irws.get_hepps_person_by_netid,
+                          irws.get_hr_person_by_netid,
                           'idtest55')
 
-    def test_post_hepps_person_by_netid(self):
+    def test_post_hr_person_by_netid(self):
         irws = IRWS()
         netid = 'idtest56'
         # prime the cache
-        irws.get_hepps_person_by_netid(netid)
-        response = irws.post_hepps_person_by_netid(
+        irws.get_hr_person_by_netid(netid)
+        response = irws.post_hr_person_by_netid(
             netid,
             '{"wp_publish": "E"}')
         self.assertEqual(200, response)
-        identity = irws.get_hepps_person_by_netid(netid)
+        identity = irws.get_hr_person_by_netid(netid)
         self.assertEqual('E', identity.wp_publish)
 
-    def test_post_hepps_person_by_netid_not_hepps(self):
+    def test_post_hr_person_by_netid(self):
+        irws = IRWS()
+        netid = 'a_idtest56_uwhr'
+        # prime the cache
+        irws.get_hr_person_by_netid(netid)
+        response = irws.post_hr_person_by_netid(
+            netid,
+            '{"wp_publish": "E"}')
+        self.assertEqual(200, response)
+        identity = irws.get_hr_person_by_netid(netid)
+        self.assertEqual('E', identity.wp_publish)
+
+    def test_post_hr_person_by_netid_not_hr(self):
         irws = IRWS()
         self.assertRaises(IRWSPersonNotFound,
-                          irws.post_hepps_person_by_netid,
+                          irws.post_hr_person_by_netid,
                           'idtest55',
                           '{"wp_publish": "E"}')
 
-    def test_post_hepps_person_by_netid_data_failure(self):
+    def test_post_hr_person_by_netid_data_failure(self):
         self.assertRaises(DataFailureException,
-                          IRWS().post_hepps_person_by_netid,
+                          IRWS().post_hr_person_by_netid,
                           'idtest56',
                           '{"wp_publish": "E"}')
 
-    def test_valid_hepps_person_from_json(self):
-        person = IRWS().valid_hepps_person_from_json('{"wp_publish": "Y"}')
+    def test_valid_hr_person_from_json(self):
+        person = IRWS().valid_hr_person_from_json('{"wp_publish": "Y"}')
         expected = json.dumps({'person': [{'wp_publish': 'Y'}]})
         self.assertEqual(expected, json.dumps(person))
         # test all the possible values
-        person = IRWS().valid_hepps_person_from_json('{"wp_publish": "N"}')
-        person = IRWS().valid_hepps_person_from_json('{"wp_publish": "E"}')
+        person = IRWS().valid_hr_person_from_json('{"wp_publish": "N"}')
+        person = IRWS().valid_hr_person_from_json('{"wp_publish": "E"}')
 
-    def test_valid_hepps_person_from_json_bad_payload(self):
+    def test_valid_hr_person_from_json_bad_payload(self):
         self.assertRaises(InvalidIRWSPerson,
-                          IRWS().valid_hepps_person_from_json,
+                          IRWS().valid_hr_person_from_json,
                           '{"wp_publish": "J"}')
 
-    def test_valid_hepps_person_from_json_bad_json(self):
+    def test_valid_hr_person_from_json_bad_json(self):
         self.assertRaises(InvalidIRWSPerson,
-                          IRWS().valid_hepps_person_from_json,
+                          IRWS().valid_hr_person_from_json,
                           '{"wp_publish":')
 
     def _json_name_from_tuple(self, x):

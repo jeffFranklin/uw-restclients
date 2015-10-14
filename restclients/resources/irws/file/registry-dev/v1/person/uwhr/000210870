@@ -1,0 +1,28 @@
+{
+  "person": [
+    {
+      "validid": "000210870",
+      "regid": "28098ACBAC71425D9B2912757E4EF3AE",
+      "lname": "Harrison",
+      "fname": "Dolley",
+      "pac": "E",
+      "category_code": "4",
+      "category_name": "Staff",
+      "college": "99",
+      "department": ".TEST ",
+      "unit": "000",
+      "hepps_type": "E",
+      "hepps_status": "A",
+      "budget": "000001",
+      "source_code": "1",
+      "source_name": "UW Faculty/Staff",
+      "status_code": "1",
+      "status_name": "Current",
+      "in_feed": "2",
+      "logname": "registry2:getvalidations:NewID/69.91.223.171:anonymous@netid11.cac.washington.edu",
+      "created": "2015-05-14 16:01:58.671418",
+      "updated": "2015-05-14 16:52:52.452015"
+    }
+  ],
+  "totalcount": 1
+}
