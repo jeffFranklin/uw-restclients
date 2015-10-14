@@ -50,8 +50,8 @@ class Name(models.Model):
         app_label = "restclients"
 
 
-# IRWS Hepps Person
-class HeppsPerson(models.Model):
+# IRWS Uwhr Person
+class UwhrPerson(models.Model):
     validid = models.CharField(max_length=32, unique=True)
     regid = models.CharField(max_length=32,
                                db_index=True,

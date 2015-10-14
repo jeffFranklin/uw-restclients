@@ -12,7 +12,7 @@ from restclients.exceptions import InvalidRegID, InvalidNetID, InvalidEmployeeID
 from restclients.exceptions import InvalidIdCardPhotoSize
 from restclients.exceptions import DataFailureException
 from restclients.exceptions import InvalidIRWSName, InvalidIRWSPerson, IRWSPersonNotFound
-from restclients.models.irws import Name, HeppsPerson, PersonIdentity
+from restclients.models.irws import Name, UwhrPerson, PersonIdentity
 from StringIO import StringIO
 from urllib import urlencode
 
@@ -86,9 +86,9 @@ class IRWS(object):
 
         return response.status
 
-    def get_hepps_person_by_uri(self, uri):
+    def get_hr_person_by_uri(self, uri):
         """
-        Returns a restclients.irws.HeppsPerson object for the given uri (from identity). 
+        Returns a restclients.irws.UwhrPerson object for the given uri (from identity).
         If the record id isn't found, nothing will be returned. If there is an error
         communicating with the IRWS, a DataFailureException will be thrown.
         """
@@ -98,32 +98,48 @@ class IRWS(object):
         if response.status != 200:
             raise DataFailureException(url, response.status, response.data)
 
-        return self._hepps_person_from_json(response.data)
+        return self._hr_person_from_json(response.data)
 
     def get_hepps_person_by_netid(self, netid):
         """
-        Returns a restclients.irws.HeppsPerson object for a given netid. Two round
+        Deprecated. Replace with get_hr_person_by_netid.
+        """
+        logger.info('Using depecrated method get_hepps_person_by_netid')
+        return self.get_hr_person_by_netid(netid)
+
+    def get_hr_person_by_netid(self, netid):
+        """
+        Returns a restclients.irws.UwhrPerson object for a given netid. Two round
         trips - one to get the identity, and a second to look up a person based on
-        the 'hepps' uri in the payload
+        the 'hepps' or 'uwhr' uri in the payload
         """
         identity = self.get_identity_by_netid(netid)
-        if 'hepps' not in identity.identifiers.keys():
-            raise IRWSPersonNotFound('netid ' + netid + ' not a hepps person')
-        return self.get_hepps_person_by_uri(identity.identifiers['hepps'])
+        if not {'hepps', 'uwhr'} & set(identity.identifiers.keys()):
+            raise IRWSPersonNotFound('netid ' + netid + ' not a hepps/uwhr person')
+        source = 'uwhr' if 'uwhr' in identity.identifiers.keys() else 'hepps'
+        return self.get_hr_person_by_uri(identity.identifiers[source])
 
-    def post_hepps_person_by_netid(self, netid, data):
+    def post_hepps_person_by_netid(self, netid):
         """
-        Post to the irws person hepps resource.
+        Deprecated. Replace with post_hr_person_by_netid.
+        """
+        logger.info('Using depecrated method post_hepps_person_by_netid')
+        return self.post_hr_person_by_netid(netid)
+
+    def post_hr_person_by_netid(self, netid, data):
+        """
+        Post to the irws person hr resource.
         We look up the person by netid to get the uri to post to.
         """
         if not self.valid_uwnetid(netid):
             raise InvalidNetID(netid)
-        hepps_person = self.valid_hepps_person_from_json(data)
+        hepps_person = self.valid_hr_person_from_json(data)
         identity = self.get_identity_by_netid(netid)
-        if 'hepps' not in identity.identifiers.keys():
-            raise IRWSPersonNotFound('netid ' + netid + ' not a hepps person')
+        if not {'hepps', 'uwhr'} & set(identity.identifiers.keys()):
+            raise IRWSPersonNotFound('netid ' + netid + ' not a hepps/uwhr person')
+        source = 'uwhr' if 'uwhr' in identity.identifiers.keys() else 'hepps'
         post_url = '/{}/v1{}'.format(self._service_name,
-                                      identity.identifiers['hepps'])
+                                      identity.identifiers[source])
         response = IRWS_DAO().postURL(post_url,
                                {'Accept': 'application/json'},
                                json.dumps(hepps_person))
@@ -169,7 +185,7 @@ class IRWS(object):
 
         return pd
 
-    def valid_hepps_person_from_json(self, data):
+    def valid_hr_person_from_json(self, data):
         """
         Validate input of supported fields and return an
         object that can be posted to irws
@@ -193,12 +209,12 @@ class IRWS(object):
         return (len(name) <= 64 and
                 self._re_name_part.match(name) != None)
 
-    def _hepps_person_from_json(self, data):
+    def _hr_person_from_json(self, data):
         """
-        Internal method, for creating the HeppsPerson object.
+        Internal method, for creating the UwhrPerson object.
         """
         person_data = json.loads(data)['person'][0]
-        person = HeppsPerson()
+        person = UwhrPerson()
         person.validid = person_data['validid']
         person.regid = person_data['regid']
         if 'studentid' in person_data: person.studentid = person_data['studentid']
