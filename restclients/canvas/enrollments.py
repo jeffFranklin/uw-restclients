@@ -12,11 +12,10 @@ class Enrollments(Canvas):
 
         https://canvas.instructure.com/doc/api/enrollments.html#method.enrollments_api.index
         """
-        url = "/api/v1/courses/%s/enrollments%s" % (course_id,
-                                                    self._params(params))
+        url = "/api/v1/courses/%s/enrollments" % (course_id)
 
         enrollments = []
-        for datum in self._get_resource(url):
+        for datum in self._get_paged_resource(url, params=params):
             enrollment = self._enrollment_from_json(datum)
             enrollments.append(enrollment)
 
@@ -35,11 +34,10 @@ class Enrollments(Canvas):
 
         https://canvas.instructure.com/doc/api/enrollments.html#method.enrollments_api.index
         """
-        url = "/api/v1/sections/%s/enrollments%s" % (section_id,
-                                                     self._params(params))
+        url = "/api/v1/sections/%s/enrollments" % (section_id)
 
         enrollments = []
-        for datum in self._get_resource(url):
+        for datum in self._get_paged_resource(url, params=params):
             enrollment = self._enrollment_from_json(datum)
             enrollments.append(enrollment)
 
@@ -58,19 +56,21 @@ class Enrollments(Canvas):
 
         https://canvas.instructure.com/doc/api/enrollments.html#method.enrollments_api.index
         """
-        url = "/api/v1/users/%s/enrollments%s" % (
-            self._sis_id(regid, sis_field="user"),
-            self._params(params))
+        url = "/api/v1/users/%s/enrollments" % (
+            self._sis_id(regid, sis_field="user"))
 
         courses = Courses()
 
         enrollments = []
-        for datum in self._get_resource(url):
+        for datum in self._get_paged_resource(url, params=params):
             course_id = datum["course_id"]
             course = courses.get_course(course_id)
 
             if course.sis_course_id is not None:
                 enrollment = self._enrollment_from_json(datum)
+                enrollment.course = course
+                # the following 3 lines are not removed
+                # to be backward compatible.
                 enrollment.course_url = course.course_url
                 enrollment.course_name = course.name
                 enrollment.sis_course_id = course.sis_course_id
@@ -78,19 +78,39 @@ class Enrollments(Canvas):
 
         return enrollments
 
-    def enroll_user_in_course(self, course_id, user_id, role, status="active"):
+    def enroll_user(self, course_id, user_id, enrollment_type, params=None):
         """
         Enroll a user into a course.
 
         https://canvas.instructure.com/doc/api/enrollments.html#method.enrollments_api.create
         """
         url = "/api/v1/courses/%s/enrollments" % course_id
-        body = {"enrollment": {"user_id": user_id,
-                               "type": role,
-                               "enrollment_state": status}}
 
-        data = self._post_resource(url, body)
+        if not params:
+            params = {}
+
+        params["user_id"] = user_id
+        params["type"] = enrollment_type
+
+        data = self._post_resource(url, {"enrollment": params})
         return self._enrollment_from_json(data)
+
+    def enroll_user_in_course(self, course_id, user_id, enrollment_type,
+                              course_section_id=None, role_id=None,
+                              status="active"):
+        params = {
+            "user_id": user_id,
+            "type": enrollment_type,
+            "enrollment_state": status
+        }
+
+        if course_section_id:
+            params['course_section_id'] = course_section_id
+
+        if role_id:
+            params['role_id'] = role_id
+
+        return self.enroll_user(course_id, user_id, enrollment_type, params)
 
     def _enrollment_from_json(self, data):
         enrollment = CanvasEnrollment()
@@ -101,21 +121,27 @@ class Enrollments(Canvas):
         enrollment.status = data["enrollment_state"]
         enrollment.html_url = data["html_url"]
         enrollment.total_activity_time = data["total_activity_time"]
+        enrollment.limit_privileges_to_course_section = data.get(
+            "limit_privileges_to_course_section", False)
         if data["last_activity_at"] is not None:
             date_str = data["last_activity_at"]
             enrollment.last_activity_at = dateutil.parser.parse(date_str)
-        if "sis_section_id" in data:
-            enrollment.sis_section_id = data["sis_section_id"]
+
+        enrollment.sis_course_id = data.get("sis_course_id", None)
+        enrollment.sis_section_id = data.get("sis_section_id", None)
+
         if "user" in data:
-            enrollment.name = data["user"]["name"]
-            if "login_id" in data["user"]:
-                enrollment.login_id = data["user"]["login_id"]
-            if "sis_user_id" in data["user"]:
-                enrollment.sis_user_id = data["user"]["sis_user_id"]
+            user_data = data["user"]
+            enrollment.name = user_data.get("name", None)
+            enrollment.sortable_name = user_data.get("sortable_name", None)
+            enrollment.login_id = user_data.get("login_id", None)
+            enrollment.sis_user_id = user_data.get("sis_user_id", None)
+
         if "grades" in data:
-            enrollment.current_score = data["grades"]["current_score"]
-            enrollment.final_score = data["grades"]["final_score"]
-            enrollment.current_grade = data["grades"]["current_grade"]
-            enrollment.final_grade = data["grades"]["final_grade"]
-            enrollment.grade_html_url = data["grades"]["html_url"]
+            grade_data = data["grades"]
+            enrollment.current_score = grade_data.get("current_score", None)
+            enrollment.final_score = grade_data.get("final_score", None)
+            enrollment.current_grade = grade_data.get("current_grade", None)
+            enrollment.final_grade = grade_data.get("final_grade", None)
+            enrollment.grade_html_url = grade_data.get("html_url", None)
         return enrollment

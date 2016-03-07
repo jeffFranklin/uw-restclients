@@ -13,7 +13,8 @@ class CanvasAccount(models.Model):
 
 
 class CanvasRole(models.Model):
-    role = models.CharField(max_length=200)
+    role_id = models.IntegerField(max_length=20)
+    label = models.CharField(max_length=200)
     base_role_type = models.CharField(max_length=200)
     workflow_state = models.CharField(max_length=50)
 
@@ -30,12 +31,14 @@ class CanvasTerm(models.Model):
     def get_start_date(self):
         if self._start_date:
             return self._start_date
-        raise Exception("Need to fetch this from the SWS, or manually pre-populate")
+        raise Exception(
+            "Need to fetch this from the SWS, or manually pre-populate")
 
     def get_end_date(self):
         if self._end_date:
             return self._end_date
-        raise Exception("Need to fetch this from the SWS, or manually pre-populate")
+        raise Exception(
+            "Need to fetch this from the SWS, or manually pre-populate")
 
     class Meta:
         db_table = "restclients_canvas_term"
@@ -52,6 +55,9 @@ class CanvasCourse(models.Model):
     workflow_state = models.CharField(max_length=50)
     public_syllabus = models.NullBooleanField()
     syllabus_body = models.TextField(null=True)
+
+    def is_unpublished(self):
+        return self.workflow_state.lower() == "unpublished"
 
     def sws_course_id(self):
         if self.sis_course_id is None:
@@ -122,18 +128,22 @@ class CanvasEnrollment(models.Model):
     role = models.CharField(max_length=80, choices=ROLE_CHOICES)
     status = models.CharField(max_length=100, choices=STATUS_CHOICES)
     name = models.CharField(max_length=100)
+    sortable_name = models.CharField(max_length=100)
     html_url = models.CharField(max_length=1000)
     sis_section_id = models.CharField(max_length=100, null=True)
     sis_course_id = models.CharField(max_length=100, null=True)
     course_url = models.CharField(max_length=2000, null=True)
     course_name = models.CharField(max_length=100, null=True)
-    current_score = models.DecimalField(max_digits=10, decimal_places=2, null=True)
-    final_score = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    current_score = models.DecimalField(max_digits=10,
+                                        decimal_places=2, null=True)
+    final_score = models.DecimalField(max_digits=10,
+                                      decimal_places=2, null=True)
     current_grade = models.TextField(max_length=12, null=True)
     final_grade = models.TextField(max_length=12, null=True)
     grade_html_url = models.CharField(max_length=1000)
     total_activity_time = models.IntegerField(max_length=10, null=True)
     last_activity_at = models.DateTimeField(null=True)
+    limit_privileges_to_course_section = models.NullBooleanField()
 
     def sws_course_id(self):
         if self.sis_course_id is None:
@@ -322,7 +332,7 @@ class Quiz(models.Model):
     published = models.NullBooleanField()
 
     class Meta:
-        db_table ="restclients_canvas_quiz"
+        db_table = "restclients_canvas_quiz"
 
 
 class GradingStandard(models.Model):

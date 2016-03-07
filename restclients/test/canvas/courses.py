@@ -19,21 +19,21 @@ class CanvasTestCourses(TestCase):
             self.assertEquals(course.term.term_id, 810, "Term id")
             self.assertEquals(course.public_syllabus, False, "public_syllabus")
             self.assertEquals(course.workflow_state, "unpublished", "workflow_state")
+            self.assertTrue(course.is_unpublished)
 
     def test_course_with_params(self):
         with self.settings(
                 RESTCLIENTS_CANVAS_DAO_CLASS='restclients.dao_implementation.canvas.File'):
             canvas = Courses()
-            course1 = canvas.get_course(149650, params={"include":"term"})
+            course1 = canvas.get_course(149650, params={"include":["term"]})
 
             self.assertEquals(course1.term.term_id, 810, "Course contains term data")
             self.assertEquals(course1.syllabus_body, None, "Course doesn't contain syllabus_body")
 
-            course2 = canvas.get_course(149650, params={"include":"syllabus_body"})
+            course2 = canvas.get_course(149650, params={"include":["syllabus_body"]})
 
             self.assertEquals(course2.syllabus_body, "Syllabus", "Course contains syllabus_body")
-            self.assertEquals(course2.term, None, "Course doesn't contain term")
-
+            self.assertEquals(course1.term.term_id, 810, "Course contains term data")
 
     def test_courses(self):
         with self.settings(
@@ -104,3 +104,14 @@ class CanvasTestCourses(TestCase):
             self.assertEquals(course.course_id, 18881, "Correct course ID")
             self.assertEquals(course.name, name, "Correct course name")
             self.assertEquals(course.account_id, account_id, "Correct account ID")
+
+    def test_update_sis_id(self):
+        with self.settings(
+                RESTCLIENTS_CANVAS_DAO_CLASS='restclients.dao_implementation.canvas.File'):
+            canvas = Courses()
+
+            course = canvas.update_sis_id(149650, "NEW_SIS_ID")
+
+            self.assertEquals(course.course_id, 149650, "Has proper course id")
+            self.assertEquals(course.course_url, "https://canvas.uw.edu/courses/149650", "Has proper course url")
+            self.assertEquals(course.sis_course_id, "NEW_SIS_ID")

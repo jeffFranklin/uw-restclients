@@ -1,10 +1,16 @@
 from django.utils import unittest
 
 from restclients.test.uwnetid.subscription import EmailForwardingTest
-from restclients.test.util.date_formator import formatorTest
+from restclients.test.util.date_formator import FormatorTest
+from restclients.test.util.datetime_convertor import DatetimeConvertorTest
+from restclients.test.util.retry import RetryTest
 from restclients.test.hfs.idcard import HfsTest
 from restclients.test.library.mylibinfo import MyLibInfoTest
 from restclients.test.digitlib.curric import DigitLibTest
+from restclients.test.grad.committee import CommitteeTest
+from restclients.test.grad.degree import DegreeTest
+from restclients.test.grad.leave import LeaveTest
+from restclients.test.grad.petition import PetitionTest
 
 from restclients.test.sws.compatible import SWSTest
 from restclients.test.sws.financial import SWSFinance
@@ -42,6 +48,8 @@ from restclients.test.pws.err500.pws import PWSTest500
 from restclients.test.pws.invalid_dao import PWSTestInvalidDAO
 from restclients.test.pws.file_implementation.dao import PWSTestFileDAO
 
+from restclients.test.kws.key import KWSTestKeyData
+
 from restclients.test.gws.group import GWSGroupBasics
 from restclients.test.gws.course_group import GWSCourseGroupBasics
 from restclients.test.gws.search import GWSGroupSearch
@@ -49,6 +57,7 @@ from restclients.test.gws.search import GWSGroupSearch
 from restclients.test.cache.none import NoCacheTest
 from restclients.test.cache.time import TimeCacheTest
 from restclients.test.cache.etag import ETagCacheTest
+from restclients.test.cache.memcached import MemcachedCacheTest
 
 from restclients.test.book.by_schedule import BookstoreScheduleTest
 
@@ -75,6 +84,7 @@ from restclients.test.canvas.users import CanvasTestUsers
 from restclients.test.canvas.submissions import CanvasTestSubmissions
 from restclients.test.canvas.assignments import CanvasTestAssignments
 from restclients.test.canvas.quizzes import CanvasTestQuizzes
+from restclients.test.canvas.external_tools import CanvasTestExternalTools
 
 from restclients.test.catalyst.gradebook import CatalystTestGradebook
 

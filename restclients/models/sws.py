@@ -3,9 +3,11 @@ from django.db import models
 from django.template import Context, loader
 from base64 import b64encode, b64decode
 from datetime import datetime
-from restclients.util.date_formator import abbr_week_month_day_str
 from restclients.exceptions import InvalidCanvasIndependentStudyCourse
 from restclients.exceptions import InvalidCanvasSection
+from restclients.util.date_formator import abbr_week_month_day_str
+from restclients.util.datetime_convertor import convert_to_begin_of_day,\
+    convert_to_end_of_day
 
 
 # PWS Person
@@ -25,6 +27,10 @@ class Person(models.Model):
     full_name = models.CharField(max_length=250)
     display_name = models.CharField(max_length=250)
 
+    student_number = models.CharField(max_length=9)
+    student_system_key = models.SlugField(max_length=10)
+    employee_id = models.CharField(max_length=9)
+
     is_student = models.NullBooleanField()
     is_staff = models.NullBooleanField()
     is_employee = models.NullBooleanField()
@@ -43,6 +49,12 @@ class Person(models.Model):
     mailstop = models.CharField(max_length=255)
     title1 = models.CharField(max_length=255)
     title2 = models.CharField(max_length=255)
+    home_department = models.CharField(max_length=255)
+
+    student_class = models.CharField(max_length=255)
+    student_department1 = models.CharField(max_length=255)
+    student_department2 = models.CharField(max_length=255)
+    student_department3 = models.CharField(max_length=255)
 
     def json_data(self):
         return {'uwnetid': self.uwnetid,
@@ -63,6 +75,7 @@ class Person(models.Model):
                 'address1': self.address1,
                 'address2': self.address2,
                 'mailstop': self.mailstop,
+                'home_department': self.home_department,
                 }
 
     def __eq__(self, other):
@@ -146,18 +159,21 @@ class SwsPerson(models.Model):
     student_name = models.CharField(max_length=255)
     student_number = models.SlugField(max_length=16, null=True, blank=True)
     student_system_key = models.SlugField(max_length=16, null=True, blank=True)
-    last_enrolled = models.ForeignKey(LastEnrolled,
-                                      on_delete=models.PROTECT,
-                                      null=True)
-    local_address = models.ForeignKey(StudentAddress,
-                                      on_delete=models.PROTECT,
-                                      null=True,
-                                      related_name='local_address')
+    last_enrolled = models.ForeignKey(
+        LastEnrolled,
+        on_delete=models.PROTECT,
+        null=True)
+    local_address = models.ForeignKey(
+        StudentAddress,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name='local_address')
     local_phone = models.CharField(max_length=64, null=True, blank=True)
-    permanent_address = models.ForeignKey(StudentAddress,
-                                      on_delete=models.PROTECT,
-                                      null=True,
-                                      related_name='permanent_address')
+    permanent_address = models.ForeignKey(
+        StudentAddress,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name='permanent_address')
     permanent_phone = models.CharField(max_length=64, null=True, blank=True)
     visa_type = models.CharField(max_length=2, null=True, blank=True)
 
@@ -173,7 +189,8 @@ class SwsPerson(models.Model):
             'directory_release': self.directory_release,
             'local_address': get_student_address_json(self.local_address),
             'local_phone': self.local_phone,
-            'permanent_address': get_student_address_json(self.permanent_address),
+            'permanent_address': get_student_address_json(
+                self.permanent_address),
             'permanent_phone': self.permanent_phone,
             'visa_type': self.visa_type
                 }
@@ -198,6 +215,7 @@ class Term(models.Model):
     last_day_add = models.DateField()
     last_day_drop = models.DateField()
     first_day_quarter = models.DateField(db_index=True)
+    census_day = models.DateField()
     last_day_instruction = models.DateField(db_index=True)
     aterm_last_date = models.DateField(blank=True)
     bterm_first_date = models.DateField(blank=True)
@@ -244,6 +262,56 @@ class Term(models.Model):
 
         return (days / 7)
 
+    def is_summer_quarter(self):
+        return self.quarter.lower() == "summer"
+
+    def get_bod_first_day(self):
+        # returns a datetime object of the midnight at begining of day
+        return convert_to_begin_of_day(self.first_day_quarter)
+
+    def get_bod_reg_period1_start(self):
+        return convert_to_begin_of_day(self.registration_period1_start)
+
+    def get_bod_reg_period2_start(self):
+        return convert_to_begin_of_day(self.registration_period2_start)
+
+    def get_bod_reg_period3_start(self):
+        return convert_to_begin_of_day(self.registration_period3_start)
+
+    def get_eod_grade_submission(self):
+        # returns a datetime object of the midnight at end of day
+        return convert_to_end_of_day(self.grade_submission_deadline)
+
+    def get_eod_aterm_last_day_add(self):
+        if not self.is_summer_quarter():
+            return None
+        return convert_to_end_of_day(self.aterm_last_day_add)
+
+    def get_eod_bterm_last_day_add(self):
+        if not self.is_summer_quarter():
+            return None
+        return convert_to_end_of_day(self.bterm_last_day_add)
+
+    def get_eod_last_day_add(self):
+        return convert_to_end_of_day(self.last_day_add)
+
+    def get_eod_last_day_drop(self):
+        return convert_to_end_of_day(self.last_day_drop)
+
+    def get_eod_census_day(self):
+        return convert_to_end_of_day(self.census_day)
+
+    def get_eod_last_final_exam(self):
+        return convert_to_end_of_day(self.last_final_exam_date)
+
+    def get_eod_last_instruction(self):
+        return convert_to_end_of_day(self.last_day_instruction)
+
+    def get_eod_summer_aterm(self):
+        if not self.is_summer_quarter():
+            return None
+        return convert_to_end_of_day(self.aterm_last_date)
+
     def term_label(self):
         return "%s,%s" % (self.year, self.quarter)
 
@@ -254,8 +322,11 @@ class Term(models.Model):
         return {
             'quarter': self.get_quarter_display(),
             'year': self.year,
-            'last_final_exam_date': self.last_final_exam_date.strftime("%Y-%m-%d 23:59:59"),
-            'grade_submission_deadline': self.grade_submission_deadline.strftime("%Y-%m-%d 23:59:59")
+            'last_final_exam_date': self.last_final_exam_date.strftime(
+                "%Y-%m-%d 23:59:59"),
+            'grade_submission_deadline':
+                self.grade_submission_deadline.strftime(
+                "%Y-%m-%d 23:59:59")
         }
 
 
@@ -272,8 +343,8 @@ class FinalExam(models.Model):
 
     def json_data(self):
         data = {
-            "is_confirmed" : self.is_confirmed,
-            "no_exam_or_nontraditional" : self.no_exam_or_nontraditional,
+            "is_confirmed": self.is_confirmed,
+            "no_exam_or_nontraditional": self.no_exam_or_nontraditional,
         }
 
         if self.start_date:
@@ -286,7 +357,9 @@ class FinalExam(models.Model):
 
 
 class Section(models.Model):
-    SUMMER_A_TERM = "A-term"
+    SUMMER_A_TERM = "a-term"
+    SUMMER_B_TERM = "b-term"
+    SUMMER_FULL_TERM = "full-term"
 
     LMS_CANVAS = "CANVAS"
     LMS_CATALYST = "CATALYST"
@@ -315,8 +388,8 @@ class Section(models.Model):
     term = models.ForeignKey(Term,
                              on_delete=models.PROTECT)
     final_exam = models.ForeignKey(FinalExam,
-                                    on_delete=models.PROTECT,
-                                    null=True)
+                                   on_delete=models.PROTECT,
+                                   null=True)
 
     curriculum_abbr = models.CharField(max_length=6,
                                        db_index=True)
@@ -344,16 +417,16 @@ class Section(models.Model):
     current_enrollment = models.IntegerField()
     auditors = models.IntegerField()
 
-#    These are for non-standard start/end dates - don't have those yet
-#    start_date = models.DateField()
-#    end_date = models.DateField()
+    # These are for non-standard start/end dates - don't have those yet
+    # start_date = models.DateField()
+    # end_date = models.DateField()
 
-#    We don't have final exam data yet :(
-#    final_exam_date = models.DateField()
-#    final_exam_start_time = models.TimeField()
-#    final_exam_end_time = models.TimeField()
-#    final_exam_building = models.CharField(max_length=5)
-#    final_exam_room_number = models.CharField(max_length=5)
+    # We don't have final exam data yet :(
+    # final_exam_date = models.DateField()
+    # final_exam_start_time = models.TimeField()
+    # final_exam_end_time = models.TimeField()
+    # final_exam_building = models.CharField(max_length=5)
+    # final_exam_room_number = models.CharField(max_length=5)
 
     primary_section_href = models.CharField(
                                             max_length=200,
@@ -385,14 +458,20 @@ class Section(models.Model):
                            'section_id')
 
     def section_label(self):
-        return "%s,%s,%s,%s/%s" % (self.term.year,
-               self.term.quarter, self.curriculum_abbr,
-               self.course_number, self.section_id)
+        return "%s,%s,%s,%s/%s" % (
+            self.term.year,
+            self.term.quarter,
+            self.curriculum_abbr,
+            self.course_number,
+            self.section_id)
 
     def primary_section_label(self):
-        return "%s,%s,%s,%s/%s" % (self.term.year,
-               self.term.quarter, self.primary_section_curriculum_abbr,
-               self.primary_section_course_number, self.primary_section_id)
+        return "%s,%s,%s,%s/%s" % (
+            self.term.year,
+            self.term.quarter,
+            self.primary_section_curriculum_abbr,
+            self.primary_section_course_number,
+            self.primary_section_id)
 
     def get_instructors(self):
         instructors = []
@@ -414,7 +493,7 @@ class Section(models.Model):
 
     def is_grading_period_open(self):
         now = datetime.now()
-        if self.summer_term == self.SUMMER_A_TERM:
+        if self.is_summer_a_term():
             open_date = self.term.aterm_grading_period_open
         else:
             open_date = self.term.grading_period_open
@@ -423,18 +502,22 @@ class Section(models.Model):
 
     def canvas_course_sis_id(self):
         if self.is_primary_section:
-            sis_id = "%s-%s-%s-%s" % (self.term.canvas_sis_id(),
+            sis_id = "%s-%s-%s-%s" % (
+                self.term.canvas_sis_id(),
                 self.curriculum_abbr.upper(),
                 self.course_number,
                 self.section_id.upper())
 
             if self.is_independent_study:
                 if self.independent_study_instructor_regid is None:
-                    raise InvalidCanvasIndependentStudyCourse("Undefined " +
-                        "instructor for independent study section: %s" % sis_id)
+                    raise InvalidCanvasIndependentStudyCourse(
+                        "Undefined " +
+                        ("instructor for independent study section: %s" %
+                         sis_id))
                 sis_id += "-%s" % self.independent_study_instructor_regid
         else:
-            sis_id = "%s-%s-%s-%s" % (self.term.canvas_sis_id(),
+            sis_id = "%s-%s-%s-%s" % (
+                self.term.canvas_sis_id(),
                 self.primary_section_curriculum_abbr.upper(),
                 self.primary_section_course_number,
                 self.primary_section_id.upper())
@@ -450,7 +533,8 @@ class Section(models.Model):
 
             sis_id += "--"
         else:
-            sis_id = "%s-%s-%s-%s" % (self.term.canvas_sis_id(),
+            sis_id = "%s-%s-%s-%s" % (
+                self.term.canvas_sis_id(),
                 self.curriculum_abbr.upper(),
                 self.course_number,
                 self.section_id.upper())
@@ -466,6 +550,31 @@ class Section(models.Model):
             return str(self.grade_date)
         return None
 
+    def is_summer_a_term(self):
+        return self.summer_term is not None and\
+            len(self.summer_term) > 0 and\
+            self.summer_term.lower() == self.SUMMER_A_TERM
+
+    def is_summer_b_term(self):
+        return self.summer_term is not None and\
+            len(self.summer_term) > 0 and\
+            self.summer_term.lower() == self.SUMMER_B_TERM
+
+    def is_half_summer_term(self):
+        return (self.is_summer_a_term() or
+                self.is_summer_b_term())
+
+    def is_full_summer_term(self):
+        return self.summer_term is not None and\
+            len(self.summer_term) > 0 and\
+            self.summer_term.lower() == self.SUMMER_FULL_TERM
+
+    def is_same_summer_term(self, summer_term):
+        return (self.summer_term is None or len(self.summer_term) == 0) and\
+            (summer_term is None or len(self.summer_term) == 0) or\
+            self.summer_term is not None and summer_term is not None and\
+            self.summer_term.lower() == summer_term.lower()
+
     def json_data(self):
         data = {
             'curriculum_abbr': self.curriculum_abbr,
@@ -479,8 +588,8 @@ class Section(models.Model):
             'summer_term': self.summer_term,
             'start_date': '',
             'end_date': '',
-            'current_enrollment' : self.current_enrollment,
-            'auditors' : self.auditors,
+            'current_enrollment': self.current_enrollment,
+            'auditors': self.auditors,
             'meetings': [],
             'credits': str(self.student_credits),
             'is_auditor':  self.is_auditor,
@@ -507,9 +616,10 @@ class SectionReference(models.Model):
                           blank=True)
 
     def section_label(self):
-        return "%s,%s,%s,%s/%s" % (self.term.year,
-               self.term.quarter, self.curriculum_abbr,
-               self.course_number, self.section_id)
+        return "%s,%s,%s,%s/%s" % (
+            self.term.year,
+            self.term.quarter, self.curriculum_abbr,
+            self.course_number, self.section_id)
 
 
 class SectionStatus(models.Model):
@@ -524,22 +634,22 @@ class SectionStatus(models.Model):
     space_available = models.IntegerField()
     is_open = models.CharField(max_length=6)
 
-
     class Meta:
         app_label = "restclients"
 
     def json_data(self):
         data = {
-            'add_code_required' : self.add_code_required,
-            'current_enrollment' : self.current_enrollment,
-            'current_registration_period' : self.current_registration_period,
-            'faculty_code_required' : self.faculty_code_required,
-            'limit_estimated_enrollment' : self.limit_estimated_enrollment,
-            'limit_estimate_enrollment_indicator' : self.limit_estimate_enrollment_indicator,
-            'room_capacity' : self.room_capacity,
-            'sln' : self.sln,
-            'space_available' : self.space_available,
-            'is_open' : self.status,
+            'add_code_required': self.add_code_required,
+            'current_enrollment': self.current_enrollment,
+            'current_registration_period': self.current_registration_period,
+            'faculty_code_required': self.faculty_code_required,
+            'limit_estimated_enrollment': self.limit_estimated_enrollment,
+            'limit_estimate_enrollment_indicator':
+                self.limit_estimate_enrollment_indicator,
+            'room_capacity': self.room_capacity,
+            'sln': self.sln,
+            'space_available': self.space_available,
+            'is_open': self.status,
         }
         return data
 
@@ -574,7 +684,7 @@ class SectionMeeting(models.Model):
     meets_friday = models.NullBooleanField()
     meets_saturday = models.NullBooleanField()
     meets_sunday = models.NullBooleanField()
-#    instructor = models.ForeignKey(Instructor, on_delete=models.PROTECT)
+    # instructor = models.ForeignKey(Instructor, on_delete=models.PROTECT)
 
     class Meta:
         app_label = "restclients"
@@ -619,11 +729,13 @@ class StudentGrades(models.Model):
     credits_attempted = models.DecimalField(max_digits=3, decimal_places=1)
     non_grade_credits = models.DecimalField(max_digits=3, decimal_places=1)
 
+
 class StudentCourseGrade(models.Model):
-    grade = models.CharField(max_length = 10)
+    grade = models.CharField(max_length=10)
     credits = models.DecimalField(max_digits=3, decimal_places=1)
     section = models.ForeignKey(Section,
                                 on_delete=models.PROTECT)
+
 
 class ClassSchedule(models.Model):
     user = models.ForeignKey(Person)
@@ -694,9 +806,12 @@ class GradeRoster(models.Model):
     allows_writing_credit = models.NullBooleanField()
 
     def graderoster_label(self):
-        return "%s,%s,%s,%s,%s,%s" % (self.section.term.year,
-            self.section.term.quarter, self.section.curriculum_abbr,
-            self.section.course_number, self.section.section_id,
+        return "%s,%s,%s,%s,%s,%s" % (
+            self.section.term.year,
+            self.section.term.quarter,
+            self.section.curriculum_abbr,
+            self.section.course_number,
+            self.section.section_id,
             self.instructor.uwregid)
 
     def xhtml(self):
@@ -797,23 +912,28 @@ class Notice(models.Model):
     custom_category = models.CharField(max_length=100,
                                        default="Uncategorized"
                                        )
+    # long_notice: if it is a short notice, this attribute
+    # will point to the corresponding long notice
 
     def json_data(self, include_abbr_week_month_day_format=False):
 
         attrib_data = []
 
         for attrib in self.attributes:
-            if attrib.data_type == "date" and include_abbr_week_month_day_format:
-                attrib_data.append({'name': attrib.name,
-                                    'data_type': attrib.data_type,
-                                    'value': attrib.get_value(),
-                                    'formatted_value': attrib.get_formatted_date_value()
-                                    })
+            if attrib.data_type == "date" and\
+                    include_abbr_week_month_day_format:
+                attrib_data.append(
+                    {'name': attrib.name,
+                     'data_type': attrib.data_type,
+                     'value': attrib.get_value(),
+                     'formatted_value': attrib.get_formatted_date_value()
+                     })
             else:
-                attrib_data.append({'name': attrib.name,
-                                    'data_type': attrib.data_type,
-                                    'value': attrib.get_value()
-                                    })
+                attrib_data.append(
+                    {'name': attrib.name,
+                     'data_type': attrib.data_type,
+                     'value': attrib.get_value()
+                     })
 
         data = {
             'notice_content': self.notice_content,
@@ -840,8 +960,9 @@ class Enrollment(models.Model):
     is_honors = models.NullBooleanField()
     class_level = models.CharField(max_length=100)
     regid = models.CharField(max_length=32,
-                               db_index=True,
-                               unique=True)
+                             db_index=True,
+                             unique=True)
+
     # majors
     # minors
     class Meta:

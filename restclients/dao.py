@@ -5,6 +5,7 @@ from restclients.dao_implementation.pws import File as PWSFile
 from restclients.dao_implementation.sws import File as SWSFile
 from restclients.dao_implementation.gws import File as GWSFile
 from restclients.dao_implementation.irws import File as IRWSFile
+from restclients.dao_implementation.kws import File as KWSFile
 from restclients.dao_implementation.book import File as BookFile
 from restclients.dao_implementation.canvas import File as CanvasFile
 from restclients.dao_implementation.catalyst import File as CatalystFile
@@ -16,6 +17,7 @@ from restclients.dao_implementation.trumba import FileBot
 from restclients.dao_implementation.trumba import FileTac
 from restclients.dao_implementation.trumba import CalendarFile
 from restclients.dao_implementation.digitlib import File as DigitlibFile
+from restclients.dao_implementation.grad import File as GradFile
 from restclients.dao_implementation.libraries import File as LibrariesFile
 from restclients.dao_implementation.myplan import File as MyPlanFile
 from restclients.dao_implementation.hfs import File as HfsFile
@@ -39,7 +41,7 @@ class DAO_BASE(object):
                 config_module = getattr(mod, attr)
             except AttributeError:
                 raise ImproperlyConfigured('Module "%s" does not define a '
-                                   '"%s" class' % (module, attr))
+                                           '"%s" class' % (module, attr))
             return config_module()
         else:
             return default_class()
@@ -53,7 +55,7 @@ class MY_DAO(DAO_BASE):
         dao = self._getDAO()
         cache = self._getCache()
         cache_response = cache.getCache(service, url, headers)
-        if cache_response != None:
+        if cache_response is not None:
             if "response" in cache_response:
                 return cache_response["response"]
             if "headers" in cache_response:
@@ -63,7 +65,7 @@ class MY_DAO(DAO_BASE):
 
         cache_post_response = cache.processResponse(service, url, response)
 
-        if cache_post_response != None:
+        if cache_post_response is not None:
             if "response" in cache_post_response:
                 return cache_post_response["response"]
 
@@ -91,7 +93,7 @@ class Subdomain_DAO(MY_DAO):
         cache = self._getCache()
         cache_url = subdomain + url
         cache_response = cache.getCache(service, cache_url, headers)
-        if cache_response != None:
+        if cache_response is not None:
             if "response" in cache_response:
                 return cache_response["response"]
             if "headers" in cache_response:
@@ -99,9 +101,11 @@ class Subdomain_DAO(MY_DAO):
 
         response = dao.getURL(url, headers, subdomain)
 
-        cache_post_response = cache.processResponse(service, cache_url, response)
+        cache_post_response = cache.processResponse(service,
+                                                    cache_url,
+                                                    response)
 
-        if cache_post_response != None:
+        if cache_post_response is not None:
             if "response" in cache_post_response:
                 return cache_post_response["response"]
 
@@ -125,6 +129,14 @@ class PWS_DAO(MY_DAO):
 
     def _getDAO(self):
         return self._getModule('RESTCLIENTS_PWS_DAO_CLASS', PWSFile)
+
+
+class KWS_DAO(MY_DAO):
+    def getURL(self, url, headers):
+        return self._getURL('kws', url, headers)
+
+    def _getDAO(self):
+        return self._getModule('RESTCLIENTS_KWS_DAO_CLASS', KWSFile)
 
 
 class GWS_DAO(MY_DAO):
@@ -196,6 +208,14 @@ class DigitLib_DAO(MY_DAO):
         return self._getModule('RESTCLIENTS_DIGITLIB_DAO_CLASS', DigitlibFile)
 
 
+class Grad_DAO(MY_DAO):
+    def getURL(self, url, headers):
+        return self._getURL('grad', url, headers)
+
+    def _getDAO(self):
+        return self._getModule('RESTCLIENTS_GRAD_DAO_CLASS', GradFile)
+
+
 class R25_DAO(MY_DAO):
     def getURL(self, url, headers):
         return self._getURL('r25', url, headers)
@@ -261,7 +281,8 @@ class Libraries_DAO(MY_DAO):
         return self._getURL('libraries', url, headers)
 
     def _getDAO(self):
-        return self._getModule('RESTCLIENTS_LIBRARIES_DAO_CLASS', LibrariesFile)
+        return self._getModule('RESTCLIENTS_LIBRARIES_DAO_CLASS',
+                               LibrariesFile)
 
 
 class MyPlan_DAO(MY_DAO):
@@ -278,6 +299,7 @@ class Uwnetid_DAO(MY_DAO):
 
     def _getDAO(self):
         return self._getModule('RESTCLIENTS_UWNETID_DAO_CLASS', UwnetidFile)
+
 
 class TrumbaCalendar_DAO(MY_DAO):
     def getURL(self, url, headers=None):
@@ -300,6 +322,7 @@ class TrumbaBot_DAO(MY_DAO):
         return self._getModule('RESTCLIENTS_TRUMBA_BOT_DAO_CLASS',
                                FileBot)
 
+
 class TrumbaSea_DAO(MY_DAO):
     service_id = FileSea().get_path_prefix()
 
@@ -312,6 +335,7 @@ class TrumbaSea_DAO(MY_DAO):
     def _getDAO(self):
         return self._getModule('RESTCLIENTS_TRUMBA_SEA_DAO_CLASS',
                                FileSea)
+
 
 class TrumbaTac_DAO(MY_DAO):
     service_id = FileTac().get_path_prefix()

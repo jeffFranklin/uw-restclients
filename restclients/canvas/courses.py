@@ -10,13 +10,13 @@ class Courses(Canvas):
 
         https://canvas.instructure.com/doc/api/courses.html#method.courses.show
         """
-        include = params.get("include", None)
-        if include is None:
-            include = "term"
+        include = params.get("include", [])
+        if "term" not in include:
+            include.append("term")
         params["include"] = include
 
-        url = "/api/v1/courses/%s%s" % (course_id, self._params(params))
-        return self._course_from_json(self._get_resource(url))
+        url = "/api/v1/courses/%s" % (course_id)
+        return self._course_from_json(self._get_resource(url, params=params))
 
     def get_course_by_sis_id(self, sis_course_id, params={}):
         """
@@ -34,11 +34,10 @@ class Courses(Canvas):
         if "published" in params:
             params["published"] = "true" if params["published"] else ""
 
-        params = self._pagination(params)
-        url = "/api/v1/accounts/%s/courses%s" % (account_id,
-                                                 self._params(params))
+        url = "/api/v1/accounts/%s/courses" % (account_id)
+
         courses = []
-        for data in self._get_resource(url):
+        for data in self._get_paged_resource(url, params=params):
             courses.append(self._course_from_json(data))
         return courses
 
@@ -73,8 +72,7 @@ class Courses(Canvas):
         """
         params["as_user_id"] = self._sis_id(regid, sis_field="user")
 
-        url = "/api/v1/courses%s" % self._params(params)
-        data = self._get_resource(url)
+        data = self._get_resource("/api/v1/courses", params=params)
         del params["as_user_id"]
 
         courses = []
@@ -96,6 +94,19 @@ class Courses(Canvas):
         body = {"course": {"name": course_name}}
 
         data = self._post_resource(url, body)
+
+        return self._course_from_json(data)
+
+    def update_sis_id(self, course_id, sis_course_id):
+        """
+        Updates the SIS ID for the course identified by the passed course ID.
+
+        https://canvas.instructure.com/doc/api/courses.html#method.courses.update
+        """
+        url = "/api/v1/courses/%s" % course_id
+        body = {"course": {"sis_course_id": sis_course_id}}
+
+        data = self._put_resource(url, body)
 
         return self._course_from_json(data)
 

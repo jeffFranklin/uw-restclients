@@ -47,7 +47,7 @@ class CanvasTestEnrollment(TestCase):
 
             enrollment = enrollments[0]
 
-            self.assertEquals(enrollment.course_url, "https://canvas.uw.edu/courses/149650", "Has proper course url")
+            self.assertEquals(enrollment.course.course_url, "https://canvas.uw.edu/courses/149650", "Has proper course url")
             self.assertEquals(enrollment.sis_course_id, "2013-spring-PHYS-121-A")
             self.assertEquals(enrollment.sws_course_id(), "2013,spring,PHYS,121/A")
 
@@ -57,6 +57,7 @@ class CanvasTestEnrollment(TestCase):
             self.assertEquals(stu_enrollment.login_id, "javerage", "Login ID")
             self.assertEquals(stu_enrollment.sis_user_id, "9136CCB8F66711D5BE060004AC494FFE", "SIS User ID")
             self.assertEquals(stu_enrollment.name, "JAMES AVERAGE STUDENT", "Name")
+            self.assertEquals(enrollment.sortable_name, "STUDENT, JAMES AVERAGE", "Sortable Name")
             self.assertEquals(str(stu_enrollment.last_activity_at), "2012-08-18 23:08:51-06:00", "Last activity datetime")
             self.assertEquals(stu_enrollment.total_activity_time, 100, "Total activity time")
             self.assertEquals(stu_enrollment.status, CanvasEnrollment.STATUS_ACTIVE, "Status")
@@ -72,6 +73,7 @@ class CanvasTestEnrollment(TestCase):
 
             enrollment = enrollments[0]
             self.assertEquals(enrollment.name, "j.average@gmail.com", "Name")
+            self.assertEquals(enrollment.sortable_name, "j.average@gmail.com", "Sortable Name")
             self.assertEquals(enrollment.login_id, None)
             self.assertEquals(enrollment.status, CanvasEnrollment.STATUS_INVITED, "Status")
 
