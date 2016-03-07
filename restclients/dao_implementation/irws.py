@@ -12,10 +12,11 @@ from restclients.dao_implementation.mock import get_mockdata_url
 
 logger = logging.getLogger(__name__)
 
-# This seemed like a good number based on a test using a class w/ 300 students.
-# The range 10-50 all did well, so this seemed like the most sociable, high performing
-# number to choose
+# This seemed like a good number based on a test using a class w/ 300
+# students.  The range 10-50 all did well, so this seemed like the
+# most sociable, high performing number to choose
 IRWS_MAX_POOL_SIZE = 10
+
 
 class File(object):
     """
@@ -122,12 +123,12 @@ class Live(object):
                             service_name='irws')
 
     _pool = None
+
     @property
     def pool(self):
         if Live._pool is None:
             Live._pool = get_con_pool(settings.RESTCLIENTS_IRWS_HOST,
-                                 settings.RESTCLIENTS_IRWS_KEY_FILE,
-                                 settings.RESTCLIENTS_IRWS_CERT_FILE,
-                                 max_pool_size=IRWS_MAX_POOL_SIZE)
+                                      settings.RESTCLIENTS_IRWS_KEY_FILE,
+                                      settings.RESTCLIENTS_IRWS_CERT_FILE,
+                                      max_pool_size=IRWS_MAX_POOL_SIZE)
         return Live._pool
-

@@ -3,22 +3,23 @@ from django.db import models
 from django.template import Context, loader
 from base64 import b64encode, b64decode
 from datetime import datetime
+from restclients.models.base import RestClientsModel
 from restclients.util.date_formator import abbr_week_month_day_str
 from restclients.exceptions import InvalidCanvasIndependentStudyCourse
 from restclients.exceptions import InvalidCanvasSection
 
 
 # IRWS Person Identity
-class PersonIdentity(models.Model):
+class PersonIdentity(RestClientsModel):
     regid = models.CharField(max_length=32)
 
     def __init__(self, *args, **kwargs):
         super(PersonIdentity, self).__init__(*args, **kwargs)
         self.identifiers = {}
 
-    
+
 # IRWS Name
-class Name(models.Model):
+class Name(RestClientsModel):
     validid = models.CharField(max_length=32, unique=True)
     formal_cname = models.CharField(max_length=255)
     formal_fname = models.CharField(max_length=255)
@@ -29,7 +30,6 @@ class Name(models.Model):
     display_mname = models.CharField(max_length=255)
     display_lname = models.CharField(max_length=255)
     display_privacy = models.CharField(max_length=32)
-
 
     def json_data(self):
         return {"formal_cname": self.formal_cname,
@@ -46,18 +46,14 @@ class Name(models.Model):
     def __eq__(self, other):
         return self.uwregid == other.uwregid
 
-    class Meta:
-        app_label = "restclients"
-
 
 # IRWS Uwhr Person
-class UwhrPerson(models.Model):
+class UwhrPerson(RestClientsModel):
     validid = models.CharField(max_length=32, unique=True)
     regid = models.CharField(max_length=32,
-                               db_index=True,
-                               unique=True)
+                             db_index=True,
+                             unique=True)
     studentid = models.CharField(max_length=32)
-
 
     fname = models.CharField(max_length=255)
     lname = models.CharField(max_length=255)
@@ -118,8 +114,3 @@ class UwhrPerson(models.Model):
 
     def __eq__(self, other):
         return self.uwregid == other.uwregid
-
-    class Meta:
-        app_label = "restclients"
-
-
